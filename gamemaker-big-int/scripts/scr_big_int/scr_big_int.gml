@@ -18,7 +18,10 @@ function big_int(val) constructor{
 				if(string_count(".",val) > 0){ show_error($"big_int: number(*num string contains .(point)*)",false); }
 			}
 			
-			if(string_char_at(val,1))
+			if(string_char_at(val,1) == "-"){
+				negative = true;
+				val = string_delete(val,1,1);
+			}
 			
 			for(var i = 1; i <= string_length(val); i += BIG_INT_DECIMAL_CHUNK_LENGTH){
 				array_push(_dec_chunks,real(string_copy(val,i,BIG_INT_DECIMAL_CHUNK_LENGTH)));
