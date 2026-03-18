@@ -32,7 +32,7 @@ function __class_big_int__(val) constructor{
 			while(true){
 				var _idx = i-BIG_INT_DECIMAL_CHUNK_LENGTH+1;
 				array_push(_dec_chunks,real(string_copy(val,max(_idx,1),BIG_INT_DECIMAL_CHUNK_LENGTH+_idx-1)));
-				if(i <= 0){ break; }	
+				if(_idx <= 0){ break; }	
 				i -= BIG_INT_DECIMAL_CHUNK_LENGTH;
 			}
 		} else if(is_real(val)){
