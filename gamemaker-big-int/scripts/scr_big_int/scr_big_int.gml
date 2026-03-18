@@ -5,7 +5,11 @@
 #macro BIG_INT_DECIMAL_CHUNK_DIVISOR 10000000
 #macro BIG_INT_BASE_CHUNK_DIVISOR 16777216
 
-function big_int(val) constructor{
+function big_int(val){
+	return new __class_big_int__(val);
+}
+
+function __class_big_int__(val) constructor{
 	negative = false;
 	num_data = [];
 	

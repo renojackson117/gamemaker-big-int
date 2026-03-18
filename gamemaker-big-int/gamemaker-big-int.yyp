@@ -21,6 +21,7 @@
   },
   "name":"gamemaker-big-int",
   "resources":[
+    {"id":{"name":"Object1","path":"objects/Object1/Object1.yy",},},
     {"id":{"name":"Room1","path":"rooms/Room1/Room1.yy",},},
     {"id":{"name":"scr_big_int","path":"scripts/scr_big_int/scr_big_int.yy",},},
   ],
