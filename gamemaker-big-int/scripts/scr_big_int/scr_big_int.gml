@@ -66,17 +66,22 @@ function big_int(val) constructor{
 	
 	static get = function(){
 		var _dec_chunks = [0];
-		var _carry = 0;
 		
-		while(true){
-			for(var i = array_length(num_data)-1; i >= 0; i--){
-				for(var ii = 0; ii < array_length(_dec_chunks); ii++){
-					var _val = _dec_chunks[ii] * BIG_INT_DECIMAL_CHUNK_DIVISOR + _carry;
-					_dec_chunks[ii] = _val mod BIG_INT_DECIMAL_CHUNK_DIVISOR;
-					_carry += _val div BIG_INT_DECIMAL_CHUNK_DIVISOR;
-				}
+		for(var i = array_length(num_data)-1; i >= 0; i--){
+			var _carry = num_data[i];
+			
+			for(var ii = 0; ii < array_length(_dec_chunks); ii++){
+				var _val = _dec_chunks[ii] * BIG_INT_BASE_CHUNK_DIVISOR + _carry;
+				_dec_chunks[ii] = _val mod BIG_INT_DECIMAL_CHUNK_DIVISOR;
+				_carry = _val div BIG_INT_DECIMAL_CHUNK_DIVISOR;
 			}
+			while(_carry > 0){
+	            array_push(_dec_chunks, _carry mod BIG_INT_DECIMAL_CHUNK_DIVISOR);
+	            _carry = _carry div BIG_INT_DECIMAL_CHUNK_DIVISOR;
+	        }
 		}
+		
+		return _dec_chunks;
 	}
 	
 	set(val);
