@@ -15,6 +15,7 @@ function __class_big_int__(val) constructor{
 	
 	static set = function(val)
 	{
+		num_data = [];
 		var _dec_chunks = [];
 		
 		if(is_string(val)){
@@ -31,8 +32,8 @@ function __class_big_int__(val) constructor{
 			var i = string_length(val);
 			while(true){
 				var _idx = i-BIG_INT_DECIMAL_CHUNK_LENGTH+1;
-				array_push(_dec_chunks,real(string_copy(val,max(_idx,1),BIG_INT_DECIMAL_CHUNK_LENGTH+_idx-1)));
-				if(_idx <= 0){ break; }	
+				array_push(_dec_chunks,real(string_copy(val,max(_idx,1),min(BIG_INT_DECIMAL_CHUNK_LENGTH,BIG_INT_DECIMAL_CHUNK_LENGTH+_idx-1))));
+				if(_idx <= 1){ break; }	
 				i -= BIG_INT_DECIMAL_CHUNK_LENGTH;
 			}
 		} else if(is_real(val)){
@@ -48,24 +49,22 @@ function __class_big_int__(val) constructor{
 		} else if(BIG_INT_SAFE_MODE){
 			show_error($"big_int: number(*not a string or real*)",false)
 		}
-		
-		var _reminder = 0;
-		
+		show_message(_dec_chunks)
 		while(true){
-			var _is_all_zero = true;
+			var _reminder = 0;
+			var _has_left = false;
 			for(var i = array_length(_dec_chunks)-1; i >= 0; i--){
-				var _num = _dec_chunks[i] + _reminder * BIG_INT_DECIMAL_CHUNK_DIVISOR;
-				var _base_num = _num div BIG_INT_BASE_CHUNK_DIVISOR;
-				_reminder = _num mod BIG_INT_BASE_CHUNK_DIVISOR;
-				_dec_chunks[i] = _base_num;
-				if(_base_num > 0){ _is_all_zero = false; }
+				var _num = _dec_chunks[i] + _reminder * BIG_INT_DECIMAL_CHUNK_DIVISOR;//show_message($"_num {_dec_chunks[i] + _reminder * BIG_INT_DECIMAL_CHUNK_DIVISOR}")
+				_dec_chunks[i] = _num div BIG_INT_BASE_CHUNK_DIVISOR;
+				_reminder = _num mod BIG_INT_BASE_CHUNK_DIVISOR;//show_message($"{_dec_chunks[i]} {_reminder}")
+				if(_dec_chunks[i] != 0){ _has_left = true; }
 			}
+			
 			array_push(num_data,_reminder);
-			if(_is_all_zero){ break; }
-			while(array_length(_dec_chunks) > 0 && _dec_chunks[array_length(_dec_chunks)-1] == 0) {
-		        array_pop(_dec_chunks);
-		    }
+			if(!_has_left){ break; }
 		}
+		show_message(num_data)
+		if (array_length(num_data) == 0) array_push(num_data, 0);
 	}
 	
 	static get = function(){
@@ -78,11 +77,8 @@ function __class_big_int__(val) constructor{
 				var _val = _dec_chunks[ii] * BIG_INT_BASE_CHUNK_DIVISOR + _carry;
 				_dec_chunks[ii] = _val mod BIG_INT_DECIMAL_CHUNK_DIVISOR;
 				_carry = _val div BIG_INT_DECIMAL_CHUNK_DIVISOR;
+				if(_carry > 0){ array_push(_dec_chunks, _carry mod BIG_INT_DECIMAL_CHUNK_DIVISOR); }
 			}
-			while(_carry > 0){
-	            array_push(_dec_chunks, _carry mod BIG_INT_DECIMAL_CHUNK_DIVISOR);
-	            _carry = _carry div BIG_INT_DECIMAL_CHUNK_DIVISOR;
-	        }
 		}
 		
 		return _dec_chunks;
