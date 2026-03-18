@@ -47,11 +47,35 @@ function big_int(val) constructor{
 		
 		var _reminder = 0;
 		
-		for(var i = array_length(_dec_chunks); i >= 0; i++){
-			var _num = _dec_chunks[i] + _reminder * BIG_INT_DECIMAL_CHUNK_DIVISOR;
-			var _base_num = floor(_num/BIG_INT_BASE_CHUNK_DIVISOR);
-			_reminder = _num % BIG_INT_BASE_CHUNK_DIVISOR;
-			array_push(num_data,_base_num);
+		while(true){
+			var _is_all_zero = true;
+			for(var i = array_length(_dec_chunks)-1; i >= 0; i--){
+				var _num = _dec_chunks[i] + _reminder * BIG_INT_DECIMAL_CHUNK_DIVISOR;
+				var _base_num = _num div BIG_INT_BASE_CHUNK_DIVISOR;
+				_reminder = _num mod BIG_INT_BASE_CHUNK_DIVISOR;
+				_dec_chunks[i] = _base_num;
+				if(_base_num > 0){ _is_all_zero = false; }
+			}
+			array_push(num_data,_reminder);
+			if(_is_all_zero){ break; }
+			while(array_length(_dec_chunks) > 0 && _dec_chunks[array_length(_dec_chunks)-1] == 0) {
+		        array_pop(_dec_chunks);
+		    }
+		}
+	}
+	
+	static get = function(){
+		var _dec_chunks = [0];
+		var _carry = 0;
+		
+		while(true){
+			for(var i = array_length(num_data)-1; i >= 0; i--){
+				for(var ii = 0; ii < array_length(_dec_chunks); ii++){
+					var _val = _dec_chunks[ii] * BIG_INT_DECIMAL_CHUNK_DIVISOR + _carry;
+					_dec_chunks[ii] = _val mod BIG_INT_DECIMAL_CHUNK_DIVISOR;
+					_carry += _val div BIG_INT_DECIMAL_CHUNK_DIVISOR;
+				}
+			}
 		}
 	}
 	
