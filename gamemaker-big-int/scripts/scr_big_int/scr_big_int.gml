@@ -3,6 +3,7 @@
 #macro BIG_INT_SAFE_MODE true
 #macro BIG_INT_DECIMAL_CHUNK_LENGTH 7
 #macro BIG_INT_DECIMAL_CHUNK_DIVISOR 10000000
+#macro BIG_INT_BASE_CHUNK_DIVISOR 16777216
 
 function big_int(val) constructor{
 	negative = false;
@@ -42,6 +43,15 @@ function big_int(val) constructor{
 			} until(val <= 0)
 		} else if(BIG_INT_SAFE_MODE){
 			show_error($"big_int: number(*not a string or real*)",false)
+		}
+		
+		var _reminder = 0;
+		
+		for(var i = array_length(_dec_chunks); i >= 0; i++){
+			var _num = _dec_chunks[i] + _reminder * BIG_INT_DECIMAL_CHUNK_DIVISOR;
+			var _base_num = floor(_num/BIG_INT_BASE_CHUNK_DIVISOR);
+			_reminder = _num % BIG_INT_BASE_CHUNK_DIVISOR;
+			array_push(num_data,_base_num);
 		}
 	}
 	
