@@ -84,6 +84,7 @@ function __class_big_int__(val) constructor{
 		while(_dec_chunks[array_length(_dec_chunks)-1] == 0){ array_pop(_dec_chunks);  }
 		
 		var _result = negative ? "-" : "";
+		
 		for(var i = array_length(_dec_chunks)-1; i >= 0; i--){
 			_result += string(_dec_chunks);
 		}
@@ -98,10 +99,14 @@ function __class_big_int__(val) constructor{
 		for(var i = 0; i < array_length(_result_chunks); i++){
 			var _a_val = i < array_length(a) ? a[i] : 0;
 			var _b_val = i < array_length(b) ? b[i] : 0;
+			
 			if(_a_val == 0 && _b_val == 0){ break; }
+			
 			var _val = (_a_val + _b_val) + _carry;
+			
 			_result_chunks[i] = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
 			_carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
+			
 			if(_carry > 0){ array_push(_result_chunks, 0); }
 		}
 		
@@ -110,7 +115,17 @@ function __class_big_int__(val) constructor{
 		return _result_chunks;
 	}
 	
-	static
+	static cmp = function(a){
+		if(array_length(num_data) > array_length(a)){ return 1; }
+		if(array_length(num_data) < array_length(a)){ return -1; }
+		
+		for(var i = array_length(num_data)-1; i >= 0; i--){
+			if(num_data[i] > a[i]){ return 1; }
+			if(num_data[i] < a[i]){ return -1; }
+		}
+		
+		return 0;
+	}
 	
 	set(val);
 }
