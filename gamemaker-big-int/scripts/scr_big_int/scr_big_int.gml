@@ -170,6 +170,7 @@ function __class_big_int__(val,negative = false) constructor{
 		}
 		
 		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
+		
 		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 		
 		return big_int(_result_chunks, dest.negative != source.negative);
@@ -179,6 +180,7 @@ function __class_big_int__(val,negative = false) constructor{
 		if(cmp == 0){ return big_int(0, false); }
 		if(cmp == -1){
 			var _temp = dest;
+			
 			dest = source;
 			source = _temp;
 		}
@@ -190,18 +192,19 @@ function __class_big_int__(val,negative = false) constructor{
 			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
 			var _source_val = i < array_length(source.num_data) ? source.num_data[i] : 0;
 			
-			if(_dest_val == 0 && _source_val == 0){ break; }
+			var _val = (_dest_val - _source_val) - _borrow;
 			
-			var _val = (_dest_val + _source_val) + _carry;
+			_result_chunks[i] = ((_val mod BIG_INT_BASE_CHUNK_DIVISOR) + BIG_INT_BASE_CHUNK_DIVISOR)  mod BIG_INT_BASE_CHUNK_DIVISOR;
+			_borrow = abs(_val div BIG_INT_BASE_CHUNK_DIVISOR);
 			
-			_result_chunks[i] = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
-			_carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
-			
-			if(_carry > 0){ array_push(_result_chunks, 0); }
+			if(_borrow > 0){ array_push(_result_chunks, 0); }
 		}
 		
 		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
+		
 		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
+		
+		return big_int(_result_chunks, cmp == -1);
 	}
 	
 	set(val, self.negative);
