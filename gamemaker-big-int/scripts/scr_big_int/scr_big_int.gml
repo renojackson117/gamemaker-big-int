@@ -49,7 +49,7 @@ function __class_big_int__(val) constructor{
 		} else if(BIG_INT_SAFE_MODE){
 			show_error($"big_int: number(*not a string or real*)",false)
 		}
-		show_message(_dec_chunks)
+		
 		while(true){
 			var _reminder = 0;
 			var _has_left = false;
@@ -63,7 +63,7 @@ function __class_big_int__(val) constructor{
 			array_push(num_data,_reminder);
 			if(!_has_left){ break; }
 		}
-		show_message(num_data)
+		
 		if (array_length(num_data) == 0) array_push(num_data, 0);
 	}
 	
@@ -77,11 +77,37 @@ function __class_big_int__(val) constructor{
 				var _val = _dec_chunks[ii] * BIG_INT_BASE_CHUNK_DIVISOR + _carry;
 				_dec_chunks[ii] = _val mod BIG_INT_DECIMAL_CHUNK_DIVISOR;
 				_carry = _val div BIG_INT_DECIMAL_CHUNK_DIVISOR;
-				if(_carry > 0){ array_push(_dec_chunks, _carry mod BIG_INT_DECIMAL_CHUNK_DIVISOR); }
+				if(_carry > 0){ array_push(_dec_chunks, 0); }
 			}
 		}
 		
-		return _dec_chunks;
+		while(_dec_chunks[array_length(_dec_chunks)-1] == 0){ array_pop(_dec_chunks);  }
+		
+		var _result = "";
+		for(var i = array_length(_dec_chunks)-1; i >= 0; i--){
+			_result += string(_dec_chunks);
+		}
+		
+		return _result;
+	}
+	
+	static add = function(_big_int_){
+		var _result_chunks = [0];
+		var _carry = 0;
+		
+		for(var i = 0; i < array_length(_result_chunks); i++){
+			var _num_data_val = i < array_length(num_data) ? num_data[i] : 0;
+			var _big_int_val = i < array_length(_big_int_) ? _big_int_[i] : 0;
+			if(_num_data_val == 0 && _big_int_val == 0){ break; }
+			var _val = (_num_data_val[i] + _big_int_val[i]) + _carry;
+			_result_chunks[i] = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
+			_carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
+			if(_carry > 0){ array_push(_result_chunks, 0); }
+		}
+		
+		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
+		
+		return _result_chunks;
 	}
 	
 	set(val);
