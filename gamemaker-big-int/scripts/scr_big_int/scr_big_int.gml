@@ -5,20 +5,26 @@
 #macro BIG_INT_DECIMAL_CHUNK_DIVISOR 10000000
 #macro BIG_INT_BASE_CHUNK_DIVISOR 16777216
 
-function big_int(val){
-	return new __class_big_int__(val);
+function big_int(val,negative = false){
+	return new __class_big_int__(val, negative);
 }
 
-function __class_big_int__(val) constructor{
-	negative = false;
-	num_data = [];
+function __class_big_int__(val,negative = false) constructor{
+	self.negative = negative;
+	self.num_data = [];
 	
-	static set = function(val)
+	static set = function(val, _negative = negative)
 	{
+		negative = _negative;
 		num_data = [];
 		var _dec_chunks = [];
 		
-		if(is_string(val)){
+		if(is_struct(val)){
+			negative = val.negative;
+			num_data = val.num_data; 
+		} else if(is_array(val)){
+			num_data = val;
+		} else if(is_string(val)){
 			if(BIG_INT_SAFE_MODE){
 				if(val == ""){ show_error($"big_int: number(*num string is empty*)",false); }
 				if(string_count(".",val) > 0){ show_error($"big_int: number(*num string contains .(point)*)",false); }
@@ -54,9 +60,9 @@ function __class_big_int__(val) constructor{
 			var _reminder = 0;
 			var _has_left = false;
 			for(var i = array_length(_dec_chunks)-1; i >= 0; i--){
-				var _num = _dec_chunks[i] + _reminder * BIG_INT_DECIMAL_CHUNK_DIVISOR;//show_message($"_num {_dec_chunks[i] + _reminder * BIG_INT_DECIMAL_CHUNK_DIVISOR}")
+				var _num = _dec_chunks[i] + _reminder * BIG_INT_DECIMAL_CHUNK_DIVISOR;
 				_dec_chunks[i] = _num div BIG_INT_BASE_CHUNK_DIVISOR;
-				_reminder = _num mod BIG_INT_BASE_CHUNK_DIVISOR;//show_message($"{_dec_chunks[i]} {_reminder}")
+				_reminder = _num mod BIG_INT_BASE_CHUNK_DIVISOR;
 				if(_dec_chunks[i] != 0){ _has_left = true; }
 			}
 			
@@ -64,7 +70,7 @@ function __class_big_int__(val) constructor{
 			if(!_has_left){ break; }
 		}
 		
-		if (array_length(num_data) == 0) array_push(num_data, 0);
+		while(num_data[array_length(num_data)-1] == 0){ array_pop(num_data); }
 	}
 	
 	static get = function(){
@@ -81,7 +87,7 @@ function __class_big_int__(val) constructor{
 			}
 		}
 		
-		while(_dec_chunks[array_length(_dec_chunks)-1] == 0){ array_pop(_dec_chunks);  }
+		while(_dec_chunks[array_length(_dec_chunks)-1] == 0){ array_pop(_dec_chunks); }
 		
 		var _result = negative ? "-" : "";
 		
@@ -92,17 +98,49 @@ function __class_big_int__(val) constructor{
 		return _result;
 	}
 	
-	static __add__ = function(a,b){
+	static add = function(source){
+		if(negative == source.negative){
+			return __add__(num_data);
+		} else {
+			var _cmp = cmp(a);
+			if(_cmp == 1){
+				return __sub__(num_data,a);
+			}
+		}
+	}
+	
+	static cmp = function(source){	
+		return __cmp__(self,source);
+	}
+	
+	static __cmp__ = function(dest,source){
+		if(!dest.negative && source.negative){ return 1; }
+		if(dest.negative && !source.negative){ return -1; }
+		
+		var _sign = (!dest.negative && !source.negative) ? 1 : -1;
+		
+		if(array_length(dest.num_data) > array_length(source.num_data)){ return _sign; }
+		if(array_length(dest.num_data) < array_length(source.num_data)){ return -_sign; }
+		
+		for(var i = array_length(dest.num_data)-1; i >= 0; i--){
+			if(dest.num_data[i] > source.num_data[i]){ return _sign; }
+			if(dest.num_data[i] < source.num_data[i]){ return -_sign; }
+		}
+		
+		return 0;
+	}
+	
+	static __add__ = function(dest,source){
 		var _result_chunks = [0];
 		var _carry = 0;
 		
 		for(var i = 0; i < array_length(_result_chunks); i++){
-			var _a_val = i < array_length(a) ? a[i] : 0;
-			var _b_val = i < array_length(b) ? b[i] : 0;
+			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
+			var _source_val = i < array_length(source.num_data) ? source.num_data[i] : 0;
 			
-			if(_a_val == 0 && _b_val == 0){ break; }
+			if(_dest_val == 0 && _source_val == 0){ break; }
 			
-			var _val = (_a_val + _b_val) + _carry;
+			var _val = (_dest_val + _source_val) + _carry;
 			
 			_result_chunks[i] = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
 			_carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
@@ -112,19 +150,7 @@ function __class_big_int__(val) constructor{
 		
 		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
 		
-		return _result_chunks;
-	}
-	
-	static cmp = function(a){
-		if(array_length(num_data) > array_length(a)){ return 1; }
-		if(array_length(num_data) < array_length(a)){ return -1; }
-		
-		for(var i = array_length(num_data)-1; i >= 0; i--){
-			if(num_data[i] > a[i]){ return 1; }
-			if(num_data[i] < a[i]){ return -1; }
-		}
-		
-		return 0;
+		return big_int(_result_chunks, dest.negative != source.negative);
 	}
 	
 	set(val);
