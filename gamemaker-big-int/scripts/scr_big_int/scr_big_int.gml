@@ -48,6 +48,11 @@ function __class_big_int__(val,negative = false) constructor{
 				val = -val;
 			}
 			
+			if(val < BIG_INT_DECIMAL_CHUNK_DIVISOR){
+				num_data = [val];
+				return;
+			}
+			
 			do{
 				array_push(_dec_chunks,val % BIG_INT_DECIMAL_CHUNK_DIVISOR);
 				val = floor(val/BIG_INT_DECIMAL_CHUNK_DIVISOR);
@@ -100,22 +105,38 @@ function __class_big_int__(val,negative = false) constructor{
 	
 	static add = function(source){
 		if(negative == source.negative){
-			return __add__(num_data);
+			return __add__(self,source);
 		} else {
 			var _cmp = cmp(a);
+			
 			if(_cmp == 1){
-				return __sub__(num_data,a);
+				return __sub__(self,source);//self > source
+			} else if(_cmp == -1){
+				return __sub__(source, self);//self < source
 			}
 		}
+		
+		return big_int(0);
 	}
 	
-	static cmp = function(source){	
+	static get_sign = function(){
+		if(array_length(num_data) == 1 && num_data[0] == 0){ return false; }
+		return negative;
+	}
+	
+	static cmp = function(source){
 		return __cmp__(self,source);
 	}
 	
 	static __cmp__ = function(dest,source){
-		if(!dest.negative && source.negative){ return 1; }
-		if(dest.negative && !source.negative){ return -1; }
+		var _dest_negative = dest.negative;
+		var _source_negative = source.negative;
+		
+		if(array_length(dest.num_data) == 1 && dest.num_data[0] == 0){ _dest_negative = false; }
+		if(array_length(source.num_data) == 1 && source.num_data[0] == 0){ _source_negative = false; }
+		
+		if(!_dest_negative && _source_negative){ return 1; }
+		if(_dest_negative && !_source_negative){ return -1; }
 		
 		var _sign = (!dest.negative && !source.negative) ? 1 : -1;
 		
@@ -153,5 +174,5 @@ function __class_big_int__(val,negative = false) constructor{
 		return big_int(_result_chunks, dest.negative != source.negative);
 	}
 	
-	set(val);
+	set(val, self.negative);
 }
