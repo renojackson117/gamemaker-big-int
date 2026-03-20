@@ -76,6 +76,9 @@ function __class_big_int__(val,negative = false) constructor{
 		}
 		
 		while(num_data[array_length(num_data)-1] == 0){ array_pop(num_data); }
+		if(array_length(num_data) == 0){ num_data = [0]; }
+		
+		if(array_length(num_data) == 1 && num_data[0] == 0){ negative = false; }
 	}
 	
 	static get = function(){
@@ -93,6 +96,7 @@ function __class_big_int__(val,negative = false) constructor{
 		}
 		
 		while(_dec_chunks[array_length(_dec_chunks)-1] == 0){ array_pop(_dec_chunks); }
+		if(array_length(_dec_chunks) == 0){ _dec_chunks = [0]; }
 		
 		var _result = negative ? "-" : "";
 		
@@ -104,24 +108,22 @@ function __class_big_int__(val,negative = false) constructor{
 	}
 	
 	static add = function(source){
-		if(negative == source.negative){
+		var _cmp = cmp(source);
+		
+		if(_cmp == 0){ return big_int(num_data, false); }
+		
+		if(self.negative == source.negative){
 			return __add__(self,source);
 		} else {
-			var _cmp = cmp(a);
-			
-			if(_cmp == 1){
-				return __sub__(self,source);//self > source
-			} else if(_cmp == -1){
-				return __sub__(source, self);//self < source
-			}
+			return __sub__(self,source,_cmp);
 		}
 		
-		return big_int(0);
+		return big_int(0, false);
 	}
 	
 	static get_sign = function(){
-		if(array_length(num_data) == 1 && num_data[0] == 0){ return false; }
-		return negative;
+		if(array_length(num_data) == 1 && num_data[0] == 0){ self.negative = false; }
+		return self.negative;
 	}
 	
 	static cmp = function(source){
@@ -159,6 +161,35 @@ function __class_big_int__(val,negative = false) constructor{
 			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
 			var _source_val = i < array_length(source.num_data) ? source.num_data[i] : 0;
 			
+			var _val = (_dest_val + _source_val) + _carry;
+			
+			_result_chunks[i] = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
+			_carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
+			
+			if(_carry > 0){ array_push(_result_chunks, 0); }
+		}
+		
+		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
+		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
+		
+		return big_int(_result_chunks, dest.negative != source.negative);
+	}
+	
+	static __sub__ = function(dest,source,cmp = 1){
+		if(cmp == 0){ return big_int(0, false); }
+		if(cmp == -1){
+			var _temp = dest;
+			dest = source;
+			source = _temp;
+		}
+		
+		var _result_chunks = [0];
+		var _borrow = 0;
+		
+		for(var i = 0; i < array_length(_result_chunks); i++){
+			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
+			var _source_val = i < array_length(source.num_data) ? source.num_data[i] : 0;
+			
 			if(_dest_val == 0 && _source_val == 0){ break; }
 			
 			var _val = (_dest_val + _source_val) + _carry;
@@ -170,8 +201,7 @@ function __class_big_int__(val,negative = false) constructor{
 		}
 		
 		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
-		
-		return big_int(_result_chunks, dest.negative != source.negative);
+		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 	}
 	
 	set(val, self.negative);
