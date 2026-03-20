@@ -136,6 +136,10 @@ function __class_big_int__(val,negative = false) constructor{
 	}
 	
 	static __div__ = function(dest, source){
+		if(array_length(source.num_data) < 1 || source.num_data[0] == 0){
+			show_error($"big int: __div__ - divided with zero!");
+		}
+		
 		var _result_chunks = [0];
 		var _borrow = 0;
 		
@@ -148,7 +152,7 @@ function __class_big_int__(val,negative = false) constructor{
 			_result_chunks[i] = _val div BIG_INT_BASE_CHUNK_DIVISOR;
 			_borrow = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
 			
-			if(i >= array_length(dest)-1){ break; }
+			if(array_length(_result_chunks) >= array_length(dest)){ break; }
 			if(_borrow > 0){ array_push(_result_chunks, 0); }
 		}
 		
@@ -159,6 +163,37 @@ function __class_big_int__(val,negative = false) constructor{
 		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 		
 		return big_int(_result_chunks, dest.negative != source.negative);
+	}
+	
+	static __mul__ = function(dest, source){
+		var _result_chunks = [0];
+		var _carry = 0;
+		
+		for(var i = 0; i < array_length(_result_chunks); i++){
+			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
+			var _source_val = i < array_length(source.num_data) ? source.num_data[i] : 0;
+			
+			var _val = (_dest_val * _source_val) + _carry;
+			
+			_result_chunks[i] = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
+			_carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
+			
+			if(_carry > 0){ array_push(_result_chunks, 0); }
+		}
+		
+		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
+		
+		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
+		
+		return big_int(_result_chunks, dest.negative != source.negative);
+	}
+	
+	static __mod__ = function(dest, source){
+		if(array_length(source.num_data) < 1 || source.num_data[0] == 0){
+			show_error($"big int: __mod__ - divided with zero!");
+		}
+		
+		return __sub__(dest, mult(__div__(dest, source),source));
 	}
 	
 	static get_sign = function(){
