@@ -107,15 +107,29 @@ function __class_big_int__(val,negative = false) constructor{
 		return _result;
 	}
 	
-	static add = function(source){
+	static sum = function(source){
 		var _cmp = cmp(source);
 		
 		if(_cmp == 0){ return big_int(num_data, false); }
 		
 		if(self.negative == source.negative){
-			return __add__(self,source);
+			return __sum__(self, source, self.negative);
 		} else {
-			return __sub__(self,source,_cmp);
+			return __sub__(self, source, _cmp);
+		}
+		
+		return big_int(0, false);
+	}
+	
+	static sub = function(source){
+		var _cmp = cmp(source);
+		
+		if(_cmp == 0){ return big_int(num_data, false); }
+		
+		if(self.negative == source.negative){
+			return __sub__(self, source, _cmp);
+		} else {
+			return __sum__(self, source, self.negative);
 		}
 		
 		return big_int(0, false);
@@ -153,7 +167,7 @@ function __class_big_int__(val,negative = false) constructor{
 		return 0;
 	}
 	
-	static __add__ = function(dest,source){
+	static __sum__ = function(dest, source, negative = false){
 		var _result_chunks = [0];
 		var _carry = 0;
 		
@@ -173,7 +187,7 @@ function __class_big_int__(val,negative = false) constructor{
 		
 		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 		
-		return big_int(_result_chunks, dest.negative != source.negative);
+		return big_int(_result_chunks, negative);
 	}
 	
 	static __sub__ = function(dest,source,cmp = 1){
