@@ -138,7 +138,6 @@ function __class_big_int__(val,negative = false) constructor{
 	static __div__ = function(dest, source){
 		var _result_chunks = [0];
 		var _borrow = 0;
-		var _arr_max_length = array_length(dest);
 		
 		for(var i = array_length(_result_chunks)-1; i >= 0; i--){
 			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
@@ -149,9 +148,11 @@ function __class_big_int__(val,negative = false) constructor{
 			_result_chunks[i] = _val div BIG_INT_BASE_CHUNK_DIVISOR;
 			_borrow = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
 			
-			if(i+1 >= _arr_max_length){ break; }
+			if(i >= array_length(dest)-1){ break; }
 			if(_borrow > 0){ array_push(_result_chunks, 0); }
 		}
+		
+		_result_chunks = array_reverse(_result_chunks);
 		
 		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
 		
