@@ -219,14 +219,14 @@ function __class_big_int__(val,negative = false) constructor{
 	    return _q;
 	}
 	
-	static __mult_real__ = function(dest, source) {
-	    if (source == 0) return big_int(0);
-	    if (source == 1) return dest;
+	static __mult_real__ = function(dest, val) {
+	    if (val == 0) return big_int(0);
+	    if (val == 1) return dest;
 
 	    var _result_data = [];
 	    var _carry = 0;
 	    for (var i = 0; i < array_length(dest.num_data); i++) {
-	        var _val = dest.num_data[i] * source + _carry;
+	        var _val = dest.num_data[i] * val + _carry;
 	        array_push(_result_data, _val mod BIG_INT_BASE_CHUNK_DIVISOR);
 	        _carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
 	    }
