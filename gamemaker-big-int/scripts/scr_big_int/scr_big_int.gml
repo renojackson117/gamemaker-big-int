@@ -5,23 +5,23 @@
 #macro BIG_INT_DECIMAL_CHUNK_DIVISOR 10000000
 #macro BIG_INT_BASE_CHUNK_DIVISOR 16777216
 
-function big_int(val,negative = false){
+function big_int(val,negative = undefined){
 	return new __class_big_int__(val, negative);
 }
 
-function __class_big_int__(val,negative = false) constructor{
-	self.negative = negative;
+function __class_big_int__(val,_negative = undefined) constructor{
+	self.negative = _negative;
 	self.num_data = [];
 	
-	static set = function(val, _negative = negative)
+	static set = function(val, _negative = undefined)
 	{
 		negative = _negative;
 		num_data = [];
 		var _dec_chunks = [];
 		
 		if(is_struct(val)){
-			negative = val.negative;
-			num_data = val.num_data; 
+			negative ??= val.negative;
+			num_data = variable_clone(val.num_data);
 		} else if(is_array(val)){
 			num_data = val;
 		} else if(is_string(val)){
@@ -31,8 +31,10 @@ function __class_big_int__(val,negative = false) constructor{
 			}
 			
 			if(string_char_at(val,1) == "-"){
-				negative = true;
+				negative ??= true;
 				val = string_delete(val,1,1);
+			} else {
+				negative ??= false;
 			}
 			
 			var i = string_length(val);
@@ -44,8 +46,10 @@ function __class_big_int__(val,negative = false) constructor{
 			}
 		} else if(is_real(val)){
 			if(sign(val) == -1){
-				negative = true;
+				negative ??= true;
 				val = -val;
+			} else {
+				negative ??= false;
 			}
 			
 			if(val < BIG_INT_DECIMAL_CHUNK_DIVISOR){
@@ -79,6 +83,7 @@ function __class_big_int__(val,negative = false) constructor{
 		if(array_length(num_data) == 0){ num_data = [0]; }
 		
 		if(array_length(num_data) == 1 && num_data[0] == 0){ negative = false; }
+		
 	}
 	
 	static get = function(){
@@ -107,14 +112,7 @@ function __class_big_int__(val,negative = false) constructor{
 		return _result;
 	}
 	
-	static set_num_at = function(pos,val){
-		for(var i = array_length(num_data); i < pos-1; i++){
-			num_data[i] = 0;
-		}
-		num_data[pos] = val;
-	}
-	
-	static absolute = function(dest){
+	static absolute = function(dest = self){
 		return big_int(dest,false);
 	}
 	
@@ -165,26 +163,32 @@ function __class_big_int__(val,negative = false) constructor{
 		return __mod2__(self,source);
 	}
 	
+	static mult = function(source){
+		return __mult__(self,source);
+	}
+	
 	static __div__ = function(dest, source){
 		if(array_length(source.num_data) < 1 || source.num_data[0] == 0){
 			show_error($"big int: __div__ - divided with zero!",false);
 		}
+		
+		var _negative = dest.negative != source.negative;
+		dest = dest.absolute();
+		source = source.absolute();
 		
 		var _result_chunks = [0];
 		var current_rem = big_int(0);
 
 		for (var i = array_length(dest.num_data) - 1; i >= 0; i--) {
 		    // 1. 기존 나머지에 진수를 곱함 (자릿수 올리기)
-		    current_rem = __mult_real__(source,BIG_INT_BASE_CHUNK_DIVISOR);
-    
+		    current_rem = __mult_real__(current_rem,BIG_INT_BASE_CHUNK_DIVISOR);
 		    // 2. 현재 마디를 더함
-			var _curr = big_int(0);
-			_curr.set_num_at(i,num_data[i]);
-		    current_rem = __sum__(current_rem,dest._curr);
-    
+			var _curr_num = big_int(dest.num_data[i]);
+		    current_rem = __sum__(current_rem,_curr_num);
+			
 		    // 3. 이진 탐색으로 q 찾기 (q * source <= current_rem 인 최대 q)
-		    var q = find_q(current_rem, source); 
-    
+		    var q = find_q(current_rem, source);
+			
 		    // 4. 나머지 갱신
 		    var subtract_val = __mult_real__(source,q);
 		    current_rem = current_rem.sub(subtract_val);
@@ -193,7 +197,7 @@ function __class_big_int__(val,negative = false) constructor{
 		    _result_chunks[i] = q;
 		}
 		
-		return big_int(_result_chunks, dest.negative != source.negative);
+		return big_int(_result_chunks, _negative);
 	}
 	
 	static find_q = function(_current_rem, _source_abs) {
@@ -234,23 +238,37 @@ function __class_big_int__(val,negative = false) constructor{
 	    return big_int(_result_data);
 	}
 	
-	static __mul__ = function(dest, source){
-		var _result_chunks = [0];
-		var _carry = 0;
+	static __mult__ = function(dest, source){
+		var _len_dest = array_length(dest.num_data);
+	    var _len_source = array_length(source.num_data);
+	    var _max_len = _len_dest + _len_source;
+		var _result_chunks = array_create(_max_len,0);
 		
-		for(var i = 0; i < array_length(_result_chunks); i++){
+		for(var i = 0; i < _len_dest; i++){
 			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
-			var _source_val = i < array_length(source.num_data) ? source.num_data[i] : 0;
 			
-			var _val = (_dest_val * _source_val) + _carry;
+			if(_dest_val == 0){ continue; }
 			
-			_result_chunks[i] = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
-			_carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
+			var _carry = 0;
 			
-			if(_carry > 0){ array_push(_result_chunks, 0); }
+			for(var ii = 0; ii < _len_source; ii++){
+				
+				var _source_val = ii < array_length(source.num_data) ? source.num_data[ii] : 0;
+				
+				if(_source_val == 0){ continue; }
+			
+				var _val = _result_chunks[i + ii] + (_dest_val * _source_val) + _carry;
+			
+				_result_chunks[i + ii] = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
+				_carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
+			}
+			
+			if (_carry > 0) {
+	            _result_chunks[i + _len_source] += _carry;
+	        }
 		}
 		
-		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
+		while(array_length(_result_chunks) > 0 && _result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
 		
 		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 		
@@ -303,7 +321,11 @@ function __class_big_int__(val,negative = false) constructor{
 		var _result_chunks = [0];
 		var _carry = 0;
 		
-		for(var i = 0; i < array_length(_result_chunks); i++){
+		var _len_dest = array_length(dest.num_data);
+	    var _len_source = array_length(source.num_data);
+	    var _max_len = max(_len_dest, _len_source);
+		
+		for(var i = 0; i < _max_len || _carry > 0; i++){
 			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
 			var _source_val = i < array_length(source.num_data) ? source.num_data[i] : 0;
 			
@@ -311,11 +333,9 @@ function __class_big_int__(val,negative = false) constructor{
 			
 			_result_chunks[i] = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
 			_carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
-			
-			if(_carry > 0){ array_push(_result_chunks, 0); }
 		}
 		
-		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
+		while(array_length(_result_chunks) > 0 && _result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
 		
 		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 		
@@ -334,24 +354,28 @@ function __class_big_int__(val,negative = false) constructor{
 		var _result_chunks = [0];
 		var _borrow = 0;
 		
-		for(var i = 0; i < array_length(_result_chunks); i++){
+		var _len_dest = array_length(dest.num_data);
+	    var _len_source = array_length(source.num_data);
+	    var _max_len = max(_len_dest, _len_source);
+		
+		for(var i = 0; i < _max_len || _borrow > 0; i++){
 			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
 			var _source_val = i < array_length(source.num_data) ? source.num_data[i] : 0;
 			
 			var _val = (_dest_val - _source_val) - _borrow;
+
+			_borrow = _val div BIG_INT_BASE_CHUNK_DIVISOR;
+			if(_val < 0){ _val += BIG_INT_BASE_CHUNK_DIVISOR; _borrow = 1; }
 			
-			_result_chunks[i] = ((_val mod BIG_INT_BASE_CHUNK_DIVISOR) + BIG_INT_BASE_CHUNK_DIVISOR)  mod BIG_INT_BASE_CHUNK_DIVISOR;
-			_borrow = abs(_val div BIG_INT_BASE_CHUNK_DIVISOR);
-			
-			if(_borrow > 0){ array_push(_result_chunks, 0); }
+			_result_chunks[i] = ((_val mod BIG_INT_BASE_CHUNK_DIVISOR) + BIG_INT_BASE_CHUNK_DIVISOR) mod BIG_INT_BASE_CHUNK_DIVISOR;
 		}
 		
-		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
+		while(array_length(_result_chunks) > 0 && _result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
 		
 		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 		
 		return big_int(_result_chunks, cmp == -1);
 	}
 	
-	set(val, self.negative);
+	set(val, _negative);
 }
