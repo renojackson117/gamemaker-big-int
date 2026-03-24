@@ -116,30 +116,18 @@ function __class_big_int__(val,_negative = undefined) constructor{
 		return big_int(dest,false);
 	}
 	
+	static flip = function(dest = self){
+		var _int = big_int(dest);
+		_int.negative = !_int.negative;
+		return _int;
+	}
+	
 	static sum = function(source){
-		var _cmp = cmp(source);
-		
-		if(self.negative == source.negative){
-			return __sum__(self, source, self.negative);
-		} else {
-			return __sub__(self, source, _cmp);
-		}
-		
-		return big_int(0, false);
+		return __sum__(self,source);
 	}
 	
 	static sub = function(source){
-		var _cmp = cmp(source);
-		
-		if(_cmp == 0){ return big_int(num_data, false); }
-		
-		if(self.negative == source.negative){
-			return __sub__(self, source, _cmp);
-		} else {
-			return __sum__(self, source, self.negative);
-		}
-		
-		return big_int(0, false);
+		return __sub__(self,source);
 	}
 	
 	static get_sign = function(){
@@ -282,8 +270,11 @@ function __class_big_int__(val,_negative = undefined) constructor{
 		var _negative = dest.negative;
 		var _dest = absolute(dest);
 		var _source = absolute(source);
+		var _int = __sub__(_dest, __mult__(__div__(_dest, _source),_source));
 		
-		return __sub__(_dest, mult(__div__(_dest, _source),_source));
+		_int.negative = _negative;
+		
+		return _int;
 	}
 	
 	static __mod2__ = function(dest, source){
@@ -317,7 +308,15 @@ function __class_big_int__(val,_negative = undefined) constructor{
 		return 0;
 	}
 	
-	static __sum__ = function(dest, source, negative = false){
+	static __sum__ = function(dest, source){
+		if(dest.negative != source.negative){
+			if(source.negative){
+				return __sub__(dest, source.flip());
+			} else {
+				return __sub__(source, dest.flip());
+			}
+		}
+		
 		var _result_chunks = [0];
 		var _carry = 0;
 		
@@ -339,12 +338,17 @@ function __class_big_int__(val,_negative = undefined) constructor{
 		
 		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 		
-		return big_int(_result_chunks, negative);
+		return big_int(_result_chunks, dest.negative);
 	}
 	
-	static __sub__ = function(dest,source,cmp = 1){
-		if(cmp == 0){ return big_int(0, false); }
-		if(cmp == -1){
+	static __sub__ = function(dest,source){
+		if(dest.negative != source.negative){
+			return __sum__(dest, source);
+		}
+		
+		var _cmp = __cmp__(dest,source);
+		if(_cmp == 0){ return big_int(0, false); }
+		if(_cmp == -1){
 			var _temp = dest;
 			
 			dest = source;
@@ -374,7 +378,7 @@ function __class_big_int__(val,_negative = undefined) constructor{
 		
 		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 		
-		return big_int(_result_chunks, cmp == -1);
+		return big_int(_result_chunks, _cmp == -1);
 	}
 	
 	set(val, _negative);
