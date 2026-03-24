@@ -343,7 +343,7 @@ function __class_big_int__(val,_negative = undefined) constructor{
 	
 	static __sub__ = function(dest,source){
 		if(dest.negative != source.negative){
-			return __sum__(dest, source);
+			return __sum__(dest, source.flip());
 		}
 		
 		var _cmp = __cmp__(dest,source);
