@@ -75,7 +75,7 @@ function __class_big_int__(val,negative = false) constructor{
 			if(!_has_left){ break; }
 		}
 		
-		while(num_data[array_length(num_data)-1] == 0){ array_pop(num_data); }
+		while(array_length(num_data) > 0 && num_data[array_length(num_data)-1] == 0){ array_pop(num_data); }
 		if(array_length(num_data) == 0){ num_data = [0]; }
 		
 		if(array_length(num_data) == 1 && num_data[0] == 0){ negative = false; }
@@ -95,22 +95,31 @@ function __class_big_int__(val,negative = false) constructor{
 			}
 		}
 		
-		while(_dec_chunks[array_length(_dec_chunks)-1] == 0){ array_pop(_dec_chunks); }
+		while(array_length(_dec_chunks) > 0 && _dec_chunks[array_length(_dec_chunks)-1] == 0){ array_pop(_dec_chunks); }
 		if(array_length(_dec_chunks) == 0){ _dec_chunks = [0]; }
 		
 		var _result = negative ? "-" : "";
 		
 		for(var i = array_length(_dec_chunks)-1; i >= 0; i--){
-			_result += string(_dec_chunks);
+			_result += string(_dec_chunks[i]);
 		}
 		
 		return _result;
 	}
 	
+	static set_num_at = function(pos,val){
+		for(var i = array_length(num_data); i < pos-1; i++){
+			num_data[i] = 0;
+		}
+		num_data[pos] = val;
+	}
+	
+	static absolute = function(dest){
+		return big_int(dest,false);
+	}
+	
 	static sum = function(source){
 		var _cmp = cmp(source);
-		
-		if(_cmp == 0){ return big_int(num_data, false); }
 		
 		if(self.negative == source.negative){
 			return __sum__(self, source, self.negative);
@@ -135,34 +144,94 @@ function __class_big_int__(val,negative = false) constructor{
 		return big_int(0, false);
 	}
 	
+	static get_sign = function(){
+		if(array_length(num_data) == 1 && num_data[0] == 0){ self.negative = false; }
+		return self.negative;
+	}
+	
+	static cmp = function(source){
+		return __cmp__(self,source);
+	}
+	
+	static divide = function(source){
+		return __div__(self,source);
+	}
+	
+	static modular = function(source){
+		return __mod__(self,source);
+	}
+	
+	static modular2 = function(source){
+		return __mod2__(self,source);
+	}
+	
 	static __div__ = function(dest, source){
 		if(array_length(source.num_data) < 1 || source.num_data[0] == 0){
-			show_error($"big int: __div__ - divided with zero!");
+			show_error($"big int: __div__ - divided with zero!",false);
 		}
 		
 		var _result_chunks = [0];
-		var _borrow = 0;
-		
-		for(var i = array_length(_result_chunks)-1; i >= 0; i--){
-			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
-			var _source_val = i < array_length(source.num_data) ? source.num_data[i] : 0;
-			
-			var _val = _dest_val + _borrow;
-			
-			_result_chunks[i] = _val div BIG_INT_BASE_CHUNK_DIVISOR;
-			_borrow = _val mod BIG_INT_BASE_CHUNK_DIVISOR;
-			
-			if(array_length(_result_chunks) >= array_length(dest)){ break; }
-			if(_borrow > 0){ array_push(_result_chunks, 0); }
+		var current_rem = big_int(0);
+
+		for (var i = array_length(dest.num_data) - 1; i >= 0; i--) {
+		    // 1. 기존 나머지에 진수를 곱함 (자릿수 올리기)
+		    current_rem = __mult_real__(source,BIG_INT_BASE_CHUNK_DIVISOR);
+    
+		    // 2. 현재 마디를 더함
+			var _curr = big_int(0);
+			_curr.set_num_at(i,num_data[i]);
+		    current_rem = __sum__(current_rem,dest._curr);
+    
+		    // 3. 이진 탐색으로 q 찾기 (q * source <= current_rem 인 최대 q)
+		    var q = find_q(current_rem, source); 
+    
+		    // 4. 나머지 갱신
+		    var subtract_val = __mult_real__(source,q);
+		    current_rem = current_rem.sub(subtract_val);
+    
+		    // 5. 몫 저장
+		    _result_chunks[i] = q;
 		}
 		
-		_result_chunks = array_reverse(_result_chunks);
-		
-		while(_result_chunks[array_length(_result_chunks)-1] == 0){ array_pop(_result_chunks);  }
-		
-		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
-		
 		return big_int(_result_chunks, dest.negative != source.negative);
+	}
+	
+	static find_q = function(_current_rem, _source_abs) {
+	    if (__cmp__(_current_rem, _source_abs) == -1) return 0;
+
+	    var _low = 0;
+	    var _high = BIG_INT_BASE_CHUNK_DIVISOR - 1;
+	    var _q = 0;
+
+	    while (_low <= _high) {
+	        var _mid = (_low + _high) div 2;
+	        var _test_val = __mult_real__(_source_abs, _mid);
+	        var _cmp_result = __cmp__(_current_rem, _test_val);
+
+	        if (_cmp_result >= 0) {
+	            _q = _mid;
+	            _low = _mid + 1;
+	        } else {
+	            _high = _mid - 1;
+	        }
+	    }
+		
+	    return _q;
+	}
+	
+	static __mult_real__ = function(dest, source) {
+	    if (source == 0) return big_int(0);
+	    if (source == 1) return dest;
+
+	    var _result_data = [];
+	    var _carry = 0;
+	    for (var i = 0; i < array_length(dest.num_data); i++) {
+	        var _val = dest.num_data[i] * source + _carry;
+	        array_push(_result_data, _val mod BIG_INT_BASE_CHUNK_DIVISOR);
+	        _carry = _val div BIG_INT_BASE_CHUNK_DIVISOR;
+	    }
+	    if (_carry > 0) array_push(_result_data, _carry);
+	    return big_int(_result_data);
 	}
 	
 	static __mul__ = function(dest, source){
@@ -190,19 +259,21 @@ function __class_big_int__(val,negative = false) constructor{
 	
 	static __mod__ = function(dest, source){
 		if(array_length(source.num_data) < 1 || source.num_data[0] == 0){
-			show_error($"big int: __mod__ - divided with zero!");
+			show_error($"big int: __mod__ - divided with zero!",false);
+		}
+		var _negative = dest.negative;
+		var _dest = absolute(dest);
+		var _source = absolute(source);
+		
+		return __sub__(_dest, mult(__div__(_dest, _source),_source));
+	}
+	
+	static __mod2__ = function(dest, source){
+		if(array_length(source.num_data) < 1 || source.num_data[0] == 0){
+			show_error($"big int: __mod2__ - divided with zero!",false);
 		}
 		
-		return __sub__(dest, mult(__div__(dest, source),source));
-	}
-	
-	static get_sign = function(){
-		if(array_length(num_data) == 1 && num_data[0] == 0){ self.negative = false; }
-		return self.negative;
-	}
-	
-	static cmp = function(source){
-		return __cmp__(self,source);
+		return __mod__(__sum__(__mod__(dest, source), source), source);
 	}
 	
 	static __cmp__ = function(dest,source){
