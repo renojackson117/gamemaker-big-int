@@ -353,25 +353,31 @@ function __class_big_int__(val,_negative = undefined) constructor{
 			return __sum__(dest, source.flip());
 		}
 		
-		var _cmp = __cmp__(dest,source);
+		var _negative = dest.negative;
+		var _dest = absolute(dest);
+		var _source = absolute(source);
+		var _cmp = __cmp__(_dest,_source);
+		
 		if(_cmp == 0){ return big_int(0, false); }
+		
 		if(_cmp == -1){
-			var _temp = dest;
+			_negative = !_negative;
+			var _temp = _dest;
 			
-			dest = source;
-			source = _temp;
+			_dest = _source;
+			_source = _temp;
 		}
 		
 		var _result_chunks = [0];
 		var _borrow = 0;
 		
-		var _len_dest = array_length(dest.num_data);
-	    var _len_source = array_length(source.num_data);
+		var _len_dest = array_length(_dest.num_data);
+	    var _len_source = array_length(_source.num_data);
 	    var _max_len = max(_len_dest, _len_source);
 		
 		for(var i = 0; i < _max_len || _borrow > 0; i++){
-			var _dest_val = i < array_length(dest.num_data) ? dest.num_data[i] : 0;
-			var _source_val = i < array_length(source.num_data) ? source.num_data[i] : 0;
+			var _dest_val = i < array_length(_dest.num_data) ? _dest.num_data[i] : 0;
+			var _source_val = i < array_length(_source.num_data) ? _source.num_data[i] : 0;
 			
 			var _val = (_dest_val - _source_val) - _borrow;
 
@@ -385,7 +391,7 @@ function __class_big_int__(val,_negative = undefined) constructor{
 		
 		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 		
-		return big_int(_result_chunks, _cmp == -1);
+		return big_int(_result_chunks, _negative);
 	}
 	
 	set(val, _negative);
