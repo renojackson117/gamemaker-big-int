@@ -123,10 +123,12 @@ function __class_big_int__(val,_negative = undefined) constructor{
 	}
 	
 	static sum = function(source){
+		if(!is_struct(source)){ source = big_int(source); }
 		return __sum__(self,source);
 	}
 	
 	static sub = function(source){
+		if(!is_struct(source)){ source = big_int(source); }
 		return __sub__(self,source);
 	}
 	
@@ -136,22 +138,27 @@ function __class_big_int__(val,_negative = undefined) constructor{
 	}
 	
 	static cmp = function(source){
+		if(!is_struct(source)){ source = big_int(source); }
 		return __cmp__(self,source);
 	}
 	
 	static divide = function(source){
+		if(!is_struct(source)){ source = big_int(source); }
 		return __div__(self,source);
 	}
 	
 	static modular = function(source){
+		if(!is_struct(source)){ source = big_int(source); }
 		return __mod__(self,source);
 	}
 	
 	static modular2 = function(source){
+		if(!is_struct(source)){ source = big_int(source); }
 		return __mod2__(self,source);
 	}
 	
 	static mult = function(source){
+		if(!is_struct(source)){ source = big_int(source); }
 		return __mult__(self,source);
 	}
 	
