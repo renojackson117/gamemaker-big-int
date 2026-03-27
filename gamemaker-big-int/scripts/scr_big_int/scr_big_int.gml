@@ -109,7 +109,7 @@ function __class_big_int__(val,_negative = undefined) constructor{
 			_result += string_replace_all(string_format(_dec_chunks[i],BIG_INT_DECIMAL_CHUNK_LENGTH,0)," ","0");
 		}
 		
-		while(string_char_at(_result,1) == "0"){ _result = string_delete(_result,1,1); }
+		while(string_char_at(_result,1) == "0" && string_length(_result) >= 2){ _result = string_delete(_result,1,1); }
 		
 		return _result;
 	}
