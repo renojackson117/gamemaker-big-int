@@ -1,9 +1,9 @@
 // v2.3.0에 대한 스크립트 어셋 변경됨 자세한 정보는
 // https://help.yoyogames.com/hc/en-us/articles/360005277377 참조
 #macro BIG_INT_SAFE_MODE true
-#macro BIG_INT_DECIMAL_CHUNK_LENGTH 7
-#macro BIG_INT_DECIMAL_CHUNK_DIVISOR 10000000
-#macro BIG_INT_BASE_CHUNK_DIVISOR 16777216
+#macro BIG_INT_DECIMAL_CHUNK_LENGTH 4
+#macro BIG_INT_DECIMAL_CHUNK_DIVISOR 10000
+#macro BIG_INT_BASE_CHUNK_DIVISOR 32786
 
 function big_int(val,negative = undefined){
 	return new __class_big_int__(val, negative);
@@ -106,8 +106,10 @@ function __class_big_int__(val,_negative = undefined) constructor{
 		var _result = negative ? "-" : "";
 		
 		for(var i = array_length(_dec_chunks)-1; i >= 0; i--){
-			_result += string(_dec_chunks[i]);
+			_result += string_replace_all(string_format(_dec_chunks[i],BIG_INT_DECIMAL_CHUNK_LENGTH,0)," ","0");
 		}
+		
+		while(string_char_at(_result,1) == "0"){ _result = string_delete(_result,1,1); }
 		
 		return _result;
 	}

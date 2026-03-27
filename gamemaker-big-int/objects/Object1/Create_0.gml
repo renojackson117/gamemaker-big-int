@@ -1,6 +1,13 @@
 /// @description 여기에 설명 삽입
 // 이 에디터에 코드를 작성할 수 있습니다
 
+show_message($"{big_int("1000000000000").mult("240").get()}")
+show_message($"{big_int("1000000000000000000000").mult("240000000000000000").get()}")
+show_message($"{big_int("1000000000000000000000").sum("240000000000000000").get()}")
+show_message($"{big_int("1000000000000000000000").sub("240000000000000000").get()}")
+show_message($"{big_int("1000000000000000000000").divide("240000000000000000").get()}")
+show_message($"{big_int("1000000000000000000000").modular("240000000000000000").get()}")
+/*
 function ran(num,num2){
 	var _arr = [
 			[num.sum,function(a,b){return a+b;}],
