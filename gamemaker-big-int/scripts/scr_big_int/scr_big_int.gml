@@ -165,7 +165,7 @@ function __class_big_int__(val,_negative = undefined) constructor{
 	}
 	
 	static __div__ = function(dest, source){
-		if(array_length(source.num_data) < 1 || source.num_data[0] == 0){
+		if(array_length(source.num_data) == 1 && source.num_data[0] == 0){
 			show_error($"big int: __div__ - divided with zero!",false);
 		}
 		
@@ -193,6 +193,12 @@ function __class_big_int__(val,_negative = undefined) constructor{
 		    // 5. 몫 저장
 		    _result_chunks[i] = q;
 		}
+		
+		while(array_length(_result_chunks) > 0 && _result_chunks[array_length(_result_chunks)-1] == 0){ 
+		    array_pop(_result_chunks); 
+		}
+		
+		if(array_length(_result_chunks) == 0){ _result_chunks = [0]; }
 		
 		return big_int(_result_chunks, _negative);
 	}
@@ -273,7 +279,7 @@ function __class_big_int__(val,_negative = undefined) constructor{
 	}
 	
 	static __mod__ = function(dest, source){
-		if(array_length(source.num_data) < 1 || source.num_data[0] == 0){
+		if(array_length(source.num_data) == 1 && source.num_data[0] == 0){
 			show_error($"big int: __mod__ - divided with zero!",false);
 		}
 		var _negative = dest.negative;
@@ -287,7 +293,7 @@ function __class_big_int__(val,_negative = undefined) constructor{
 	}
 	
 	static __mod2__ = function(dest, source){
-		if(array_length(source.num_data) < 1 || source.num_data[0] == 0){
+		if(array_length(source.num_data) == 1 && source.num_data[0] == 0){
 			show_error($"big int: __mod2__ - divided with zero!",false);
 		}
 		
