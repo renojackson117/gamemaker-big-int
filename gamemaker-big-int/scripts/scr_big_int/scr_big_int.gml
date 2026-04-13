@@ -13,7 +13,7 @@ function __class_big_int__(val,_negative = undefined) constructor{
 	self.negative = _negative;
 	self.num_data = [];
 	
-	static set = function(val, _negative = undefined)
+	static __set__ = function(val, _negative = undefined)
 	{
 		negative = _negative;
 		num_data = [];
@@ -402,5 +402,5 @@ function __class_big_int__(val,_negative = undefined) constructor{
 		return big_int(_result_chunks, _negative);
 	}
 	
-	set(val, _negative);
+	__set__(val, _negative);
 }
